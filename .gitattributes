@@ -1,0 +1,6 @@
+# Keep the documentation site out of GitHub's language statistics,
+# so the repository is shown as an agent library, not an Astro project.
+website/** linguist-documentation
+
+# Lockfiles are generated: collapse them in diffs.
+website/package-lock.json linguist-generated
