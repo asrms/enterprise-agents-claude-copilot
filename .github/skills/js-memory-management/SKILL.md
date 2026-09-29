@@ -1,0 +1,26 @@
+---
+name: js-memory-management
+description: "Preventing and diagnosing memory leaks in vanilla JavaScript: listeners removed with AbortSignal, timer and observer cleanup, WeakMap/WeakRef, detached DOM, closures, bounded LRU caches, FinalizationRegistry, and DevTools heap snapshots. Use it for long-lived views, components, and caches."
+---
+
+# Skill: Memory Management and Leak Prevention
+
+## Implementation Rules:
+- **[ARCHITECTURE]** Every mounted view, component, or feature has an explicit lifecycle: `mount()` returns `{ destroy() }` or accepts a `signal: AbortSignal`; the router calls the cleanup of the outgoing view before mounting the next one.
+- **[MANDATORY]** Register listeners with `addEventListener(type, handler, { signal })` (Chrome 90+, Firefox 86+, Safari 15+) and remove them all with a single `controller.abort()`; for view hierarchies use derived signals with `AbortSignal.any([appSignal, viewController.signal])`.
+- **[FORBIDDEN]** `removeEventListener` with a function different from the registered one (inline arrow, regenerated `this.onClick.bind(this)`) or with a different `capture` option: it removes nothing and the listener keeps retaining closures and nodes.
+- **[MANDATORY]** Timers are always cancelable: save the `setTimeout`/`setInterval` id and call `clearTimeout`/`clearInterval` in the cleanup; for polling use a recursive `setTimeout` that stops on `signal.aborted` and pauses when `document.visibilityState === 'hidden'`; use `cancelAnimationFrame()` for `requestAnimationFrame` loops.
+- **[MANDATORY]** Release resources with the explicit APIs: `disconnect()` for `IntersectionObserver`, `ResizeObserver`, `MutationObserver`, and `PerformanceObserver` (`unobserve(el)` for a single target), `worker.terminate()`, `close()` for `WebSocket`, `EventSource`, `BroadcastChannel`, and `MessagePort`.
+- **[FORBIDDEN]** Keeping references to nodes removed from the DOM in arrays, `Map`s, `Set`s, caches, closures, or properties of long-lived objects (detached DOM tree): a single reference to a child node retains the entire subtree; store identifiers (`data-id`) instead of nodes.
+- **[PATTERN]** Data associated with DOM nodes or with objects whose lifecycle you do not control goes in a `WeakMap<Element, Data>` or `WeakSet`: the entry is collected together with the key; expando properties (`el.__order = order`) and `Map`s keyed by nodes are forbidden.
+- **[PATTERN]** `WeakRef` (Chrome 84+, Firefox 79+, Safari 14.1+) only for optional caches of large, rebuildable objects, checking `ref.deref()` on every access; the garbage collector is non-deterministic, so never use it for logic that must behave predictably.
+- **[FORBIDDEN]** `FinalizationRegistry` for mandatory cleanup (removing listeners, closing connections, saving data): the specification does not guarantee that callbacks will ever be invoked; use it only for diagnostics, for example to report undestroyed instances in development.
+- **[PATTERN]** Long-lived closures (listeners, intervals, observer callbacks) capture only the values they need (`const { sku } = product`) and not the entire payload; in V8 closures created in the same scope share the context, so a large variable used by one closure stays alive as long as any other closure from that scope is alive.
+- **[MANDATORY]** Every in-memory cache is bounded: an LRU on `Map` (update recency with `delete` + `set`, evict the first keys of `map.keys()` beyond `maxEntries`) with a TTL; `const cache = {}` objects that grow for the entire session are forbidden.
+- **[FORBIDDEN]** Structures that grow without bound: event logs, undo history, retry queues, analytics buffers; impose a limit (e.g. 100 entries) discarding the oldest; no `console.log` of large objects in production, because with DevTools open they stay referenced.
+- **[PERFORMANCE]** Release binary resources: `URL.revokeObjectURL(url)` after `URL.createObjectURL(blob)` (for example after `await img.decode()`), `ImageBitmap.close()`, `VideoFrame.close()`; transfer `ArrayBuffer`s to workers with `postMessage(buffer, [buffer])` instead of cloning them.
+- **[SECURITY]** On logout clear caches, stores, and structures that hold personal data or tokens (`cache.clear()`, store reset, `abort()` of in-flight requests), so the data does not remain reachable in the tab's heap.
+- **[TESTING]** Diagnose with Chrome DevTools > Memory: take a baseline heap snapshot, repeat the mount/unmount cycle N times, force garbage collection (trash-can icon), and take a new snapshot; in the Comparison view look for growing objects, filter by `Detached` to find `Detached HTMLDivElement`s, and follow the chain in the Retainers panel.
+- **[TESTING]** Automated cleanup tests: after `destroy()` a dispatched event must not invoke the handler (`expect(handler).not.toHaveBeenCalled()`), with fake timers `vi.getTimerCount()` must be 0, and mocked observers must have received `disconnect()`.
+- **[CONFIGURATION]** For critical flows (SPA navigation, opening and closing modals) run MemLab scenarios in CI (`npx memlab run --scenario scenario.js`) that detect detached DOM and objects growing across iterations; `performance.measureUserAgentSpecificMemory()` is available only in cross-origin isolated contexts on Chromium.
+- **[REFERENCE]** See `EXAMPLES.md` in this folder for reference anti-patterns and best practices.

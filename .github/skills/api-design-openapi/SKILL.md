@@ -1,0 +1,23 @@
+---
+name: api-design-openapi
+description: "Designing HTTP/REST APIs contract-first with OpenAPI 3.1: resource modeling and naming, HTTP methods and status codes, RFC 9457 problem details, pagination, filtering and sorting, idempotency keys, ETags and concurrency, reusable components, examples, and code generation. Use it when designing or reviewing any REST API, in any language."
+---
+
+# Skill: API Design with OpenAPI
+
+## Implementation Rules:
+- **[ARCHITECTURE]** Contract first: the OpenAPI 3.1 document (`api/openapi.yaml`) is written and reviewed before implementation, versioned with the code, and is the single source for server stubs, client SDKs, mocks, documentation, and contract/breaking-change checks.
+- **[MANDATORY]** Resources are plural nouns in kebab-case with hierarchical paths only for true containment (`/customers/{customerId}/addresses`), identifiers are opaque strings (UUID/ULID) in paths, and there are no verbs in paths; actions that do not map to CRUD are modeled as sub-resources or state transitions (`POST /orders/{orderId}/cancellation`).
+- **[MANDATORY]** Use HTTP semantics correctly: `GET` safe and cacheable, `PUT` full replacement and idempotent, `PATCH` partial update (JSON Merge Patch `application/merge-patch+json` or JSON Patch), `POST` create or non-idempotent action, `DELETE` idempotent.
+- **[MANDATORY]** Status codes: `200` OK, `201` Created with `Location`, `202` Accepted for asynchronous processing with a status resource, `204` No Content, `400` malformed, `401` unauthenticated, `403` forbidden, `404` not found, `409` conflict, `412` precondition failed, `415`, `422` semantic validation error, `428` precondition required, `429` with `Retry-After`, `500`/`503`; never `200` with an error payload.
+- **[MANDATORY]** Errors use RFC 9457 Problem Details (`application/problem+json`) with `type` (stable URI), `title`, `status`, `detail`, `instance`, and extension members such as `errors[]` with field pointers for validation and a `traceId`; the schema is a shared component referenced by every operation.
+- **[PATTERN]** Collections are always paginated: cursor-based pagination (`?limit=50&cursor=...`, response with `next` link/cursor) for large or changing datasets, offset pagination only for small bounded sets; enforce a maximum `limit`; filtering with explicit query parameters (`status=shipped&createdAfter=...`) and sorting with an allowlisted `sort=-createdAt,total`.
+- **[PATTERN]** Idempotency for unsafe retries: `POST` operations with side effects (payments, orders) accept an `Idempotency-Key` header, return the original response on replay, and reject reuse with a different payload.
+- **[PATTERN]** Optimistic concurrency with `ETag` on resources and `If-Match` required on `PUT`/`PATCH`/`DELETE` of contended resources (`412` on mismatch, `428` when missing); conditional `GET` with `If-None-Match` for caching.
+- **[PATTERN]** Schema design: `camelCase` property names consistently, dates as RFC 3339 strings (`format: date-time`) in UTC, money as a decimal string or integer minor units plus ISO 4217 currency, enums as strings, `readOnly`/`writeOnly` for server-managed and secret fields, explicit `required` lists, `additionalProperties: false` on request bodies.
+- **[PATTERN]** Separate request and response schemas when they differ (`CreateOrderRequest`, `Order`), reuse via `components` and `$ref`, and give every operation a unique `operationId`, a `summary`, tags, and realistic `examples` for requests, responses, and errors.
+- **[SECURITY]** Declare security schemes (`oauth2` with scopes, `openIdConnect`, or `http bearer`) and apply them globally with explicit per-operation scopes; mark public endpoints with `security: []` deliberately; define maximum lengths, patterns, and array limits on every input to support validation and prevent abuse.
+- **[FORBIDDEN]** Exposing internal models (database entities, stack traces, internal ids or flags), returning unbounded arrays, and using query strings for sensitive data (tokens, personal data).
+- **[CONFIGURATION]** Lint the contract in CI (Spectral with the team ruleset), validate examples against schemas, detect breaking changes against the main branch (`oasdiff breaking`), and render documentation (Redocly, Swagger UI, Scalar) from the same file.
+- **[TESTING]** Verify the implementation conforms to the contract: request/response validation middleware in tests, contract tests (Schemathesis, Dredd, Prism proxy), or consumer-driven contracts for known consumers.
+- **[REFERENCE]** See `EXAMPLES.md` in this folder for reference anti-patterns and best practices.

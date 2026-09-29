@@ -1,0 +1,27 @@
+---
+name: react-performance-optimization
+description: "React 19 and Next.js performance optimization: less client JS, next/dynamic, next/image, next/font, React Compiler, memoization only when measured, stable keys, virtualization, useTransition/useDeferredValue, Context without cascading re-renders, bundle analyzer, and Core Web Vitals budgets (LCP, INP, CLS)."
+---
+
+# Skill: React Performance Optimization and Core Web Vitals
+
+## Implementation Rules:
+- **[PERFORMANCE]** Core Web Vitals budgets at the 75th percentile of field data: LCP < 2.5 s, INP < 200 ms, CLS < 0.1; collect real metrics with `useReportWebVitals` from `next/web-vitals` in a Client Component mounted in the root layout and send them with `navigator.sendBeacon`.
+- **[ARCHITECTURE]** Reduce client JavaScript: Server Components by default, `'use client'` only on interactive leaves, heavy libraries (markdown, syntax highlighting, date and currency formatting) used only on the server; check each route's "First Load JS" in the `next build` output and set a budget for it (e.g. ≤ 170 kB gzip per route).
+- **[PATTERN]** Load heavy client components not needed for the first paint (rich text editors, charts, maps, complex modals) with `next/dynamic`: `dynamic(() => import('./chart').then((m) => m.Chart), { loading: () => <ChartSkeleton /> })`; the `ssr: false` option is allowed only inside a Client Component.
+- **[MANDATORY]** Images only with `next/image`: explicit `width`/`height` (or a static import) or `fill` in a sized container to avoid CLS, accurate `sizes` for responsive images (e.g. `sizes="(max-width: 768px) 100vw, 50vw"`), `priority` on the LCP image (in Next 16 `priority` is deprecated in favor of `preload`); never lazy loading on the LCP element.
+- **[CONFIGURATION]** In `next.config.ts` set `images.formats: ['image/avif', 'image/webp']` and `images.remotePatterns` with explicit `hostname` and `pathname` (never `hostname: '**'`), so the optimizer does not become an open proxy.
+- **[MANDATORY]** Fonts only with `next/font/google` or `next/font/local` (automatic self-hosting and fallback with `size-adjust`, hence no CLS): `display: 'swap'`, `subsets: ['latin']`, `variable: '--font-sans'`; `<link>`s to fonts.googleapis.com and font `@import`s in CSS are forbidden.
+- **[CONFIGURATION]** React Compiler: `reactCompiler: true` in Next 16 (in Next 15 `experimental.reactCompiler: true`) with `babel-plugin-react-compiler` installed; when it is active do not add manual `useMemo`, `useCallback`, or `React.memo` and respect the Rules of React, verified by the compiler rules included in `eslint-plugin-react-hooks`.
+- **[FORBIDDEN]** Without React Compiler, applying `useMemo`/`useCallback`/`memo` "just in case": use them only when the React DevTools Profiler shows commits > 16 ms or to stabilize props and dependencies of already-memoized components, documenting the measurement in a comment.
+- **[FORBIDDEN]** `key={index}` or `key={Math.random()}` on filterable, sortable, or stateful lists: use stable domain IDs; unstable keys cause remounts, loss of state, and loss of focus.
+- **[PATTERN]** Virtualize long lists (> 200 rows or wide grids) with `@tanstack/react-virtual` (`useVirtualizer` with `estimateSize` and `overscan`) or paginate on the server; never thousands of DOM nodes rendered at once.
+- **[PATTERN]** For INP use `useTransition`/`startTransition` for non-urgent updates (filters, tabs, sorting) and `useDeferredValue` to derive expensive results from typed text while keeping the input responsive; split event handlers that exceed 50 ms (long tasks).
+- **[PATTERN]** Context: split by domain (theme, session, cart) and separate state and actions into distinct contexts with a stable `value`; for frequently updated global state use a store with selectors (`useSyncExternalStore`, Zustand with `useStore(selector)`), so only the affected consumers re-render.
+- **[FORBIDDEN]** Derived state synchronized with `useEffect` + `setState` (double render and inconsistent data): compute it during render; move state down to the lowest component that uses it instead of keeping it at the top of the tree.
+- **[PERFORMANCE]** CLS: reserve space for async content with identically sized skeletons, `aspect-ratio`, or `min-height`; no banners, cookie bars, or ads injected above the content after load, unless as an overlay.
+- **[FORBIDDEN]** Imports from huge barrel files or entire libraries (`import _ from 'lodash'`, `import * as Icons from 'react-icons/md'`): import by path or add the package to `experimental.optimizePackageImports`.
+- **[PERFORMANCE]** Third-party scripts with `next/script` and `strategy="lazyOnload"` or `"afterInteractive"`, or with the `@next/third-parties` components (`GoogleTagManager`, `YouTubeEmbed`); never synchronous `<script>`s in `<head>`.
+- **[CONFIGURATION]** Bundle analysis with `@next/bundle-analyzer` enabled by `ANALYZE=true`; in Next 16 Turbopack is the default bundler and the analyzer is webpack-based, so generate the report with `ANALYZE=true next build --webpack`.
+- **[TESTING]** Budgets verified in CI with Lighthouse CI (`@lhci/cli`): assertions `largest-contentful-paint` ≤ 2500, `cumulative-layout-shift` ≤ 0.1, and `total-blocking-time` ≤ 200 (lab proxy for INP) on the main routes; a First Load JS regression > 10% blocks the PR.
+- **[REFERENCE]** See `EXAMPLES.md` in this folder for reference anti-patterns and best practices.
