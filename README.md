@@ -193,3 +193,7 @@ The agents treat `[MANDATORY]`, `[FORBIDDEN]`, and `[SECURITY]` rules as binding
 The rules reflect common enterprise defaults (for example Java 21, Spring Boot 3.3+, Python 3.12+, Next.js 15+/16, the current Angular, .NET, and Node.js releases, Swift 6, and recent Go, Kubernetes, and Terraform versions). Adapt them freely to your stack: edit `SKILL.md` for rules and `EXAMPLES.md` for examples.
 
 `.claude/` and `.github/` contain the same skills. The agents differ only in the header (tool names and skill references), so if you edit a skill or an agent's instructions, apply the same change in both folders.
+
+## License
+
+Released under the [MIT License](LICENSE).
