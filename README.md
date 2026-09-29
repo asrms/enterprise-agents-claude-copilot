@@ -4,6 +4,7 @@
 
 <br>
 
+[![Website](https://img.shields.io/badge/docs-website-F0875F?style=flat-square&logo=astro&logoColor=white)](https://asrms.github.io/enterprise-agents-claude-copilot/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)](LICENSE)
 [![Agents](https://img.shields.io/badge/agents-46-F0875F?style=flat-square)](#-agents)
 [![Skills](https://img.shields.io/badge/skills-304-C86DD7?style=flat-square)](#-how-a-skill-works)
@@ -14,7 +15,7 @@
 **A ready-made team of expert AI agents for Claude Code and GitHub Copilot.**<br>
 Drop one folder into your repo and get senior-level help on every phase of the SDLC, backed by clear, enforceable rules.
 
-[Quick start](#-quick-start) · [Agents](#-agents) · [Usage](#-usage) · [How a skill works](#-how-a-skill-works) · [Customizing](#-customizing)
+**[📖 Browse the website](https://asrms.github.io/enterprise-agents-claude-copilot/)** · [Quick start](#-quick-start) · [Agents](#-agents) · [Usage](#-usage) · [How a skill works](#-how-a-skill-works) · [Customizing](#-customizing)
 
 </div>
 
