@@ -1,0 +1,61 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { groups, agents, counts, href } from '../../lib/catalog';
+import '../../styles/catalog.css';
+
+const headings = groups.map((g) => ({ depth: 2, slug: g.id, text: g.label }));
+---
+
+<StarlightPage
+  frontmatter={{
+    title: 'All agents',
+    description: `${counts.agents} expert agents grouped by development phase. Each one combines seven skills and explicit acceptance criteria.`,
+  }}
+  headings={headings}
+>
+  <p class="lead">
+    {counts.agents} expert agents grouped by development phase. Each one combines seven skills and explicit acceptance criteria.
+  </p>
+
+  <div class="catalog-filter" data-filter-root>
+    <label class="filter-search">
+      <span class="sr-only">Filter agents</span>
+      <input type="search" placeholder="Filter by name, stack, or topic…" data-filter-input autocomplete="off" />
+    </label>
+    <p class="filter-count" data-filter-count aria-live="polite"></p>
+  </div>
+
+  {
+    groups.map((g) => (
+      <section class="catalog-group" data-filter-group>
+        <h2 id={g.id}>
+          <span aria-hidden="true">{g.emoji}</span> {g.label}
+        </h2>
+        <div class="catalog-grid">
+          {g.agents.map((name) => {
+            const a = agents[name];
+            return (
+              <a
+                class="catalog-card"
+                href={href(`agents/${a.name}/`)}
+                data-filter-item
+                data-search={`${a.name} ${a.title} ${a.summary} ${a.description} ${a.skills.join(' ')}`.toLowerCase()}
+              >
+                <span class="catalog-card-title">{a.title}</span>
+                <code class="catalog-card-id">{a.name}</code>
+                <span class="catalog-card-desc">{a.summary}</span>
+                <span class="catalog-card-foot">{a.skills.length} skills</span>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+    ))
+  }
+  <p class="filter-empty" data-filter-empty hidden>No agents match your filter.</p>
+</StarlightPage>
+
+<script>
+  import { setupFilter } from '../../scripts/filter';
+  setupFilter('agents');
+</script>

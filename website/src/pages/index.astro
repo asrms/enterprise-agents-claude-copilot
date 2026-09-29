@@ -1,0 +1,118 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { Icon } from '@astrojs/starlight/components';
+import { groups, agents, skills, counts, href, skillsInGroup } from '../lib/catalog';
+import { orbitSvg } from '../lib/orbit';
+import { SITE } from '../../site.config.mjs';
+import '../styles/home.css';
+
+const ruleTotal = Object.values(skills).reduce((n, s) => n + s.ruleCount, 0);
+
+const steps = [
+  {
+    title: 'Copy one folder',
+    text: 'Drop <code>.claude/</code> or <code>.github/</code> into your repository, or into your home folder to use it everywhere.',
+  },
+  {
+    title: 'Pick an agent',
+    text: 'Ask for it by name, choose it from the Copilot agent picker, or let the tool delegate to it when the task matches.',
+  },
+  {
+    title: 'Get reviewed, rule-backed work',
+    text: 'Every agent applies seven skills as binding rules and checks its output against explicit acceptance criteria.',
+  },
+];
+---
+
+<StarlightPage
+  frontmatter={{
+    title: SITE.title,
+    description: `${counts.agents} specialized AI agents and ${counts.skills} skills for Claude Code and GitHub Copilot.`,
+    template: 'splash',
+    hero: {
+      title: `<span class="hero-kicker">Agent library for the full SDLC</span>Enterprise <span class="gradient-text">Claude Agents</span>`,
+      tagline: `A ready-made team of expert AI agents for <strong>Claude Code</strong> and <strong>GitHub Copilot</strong>. Drop one folder into your repo and get senior-level help on every phase of the lifecycle, backed by clear, enforceable rules.`,
+      image: { html: orbitSvg() },
+      actions: [
+        { text: 'Get started', link: href('guides/getting-started/'), icon: 'right-arrow', variant: 'primary' },
+        { text: 'Browse agents', link: href('agents/'), variant: 'secondary' },
+        { text: 'GitHub', link: SITE.repoUrl, icon: 'external', variant: 'minimal' },
+      ],
+    },
+  }}
+>
+  <section class="home-stats" aria-label="Library at a glance">
+    <div><strong>{counts.agents}</strong><span>expert agents</span></div>
+    <div><strong>{counts.skills}</strong><span>skills</span></div>
+    <div><strong>{ruleTotal.toLocaleString('en-US')}</strong><span>tagged rules</span></div>
+    <div><strong>2</strong><span>tools, one library</span></div>
+  </section>
+
+  <section class="home-section">
+    <header class="home-head">
+      <p class="home-eyebrow">Coverage</p>
+      <h2>An agent for every phase</h2>
+      <p>From requirements to production. Pick an area to see its agents and the skills they are built from.</p>
+    </header>
+    <div class="group-grid">
+      {
+        groups.map((g) => (
+          <a class="group-card" href={href(`agents/#${g.id}`)}>
+            <span class="group-emoji" aria-hidden="true">{g.emoji}</span>
+            <span class="group-title">{g.label}</span>
+            <span class="group-count">
+              {g.agents.length} agents · {skillsInGroup(g.id).length} skills
+            </span>
+            <span class="group-agents">
+              {g.agents.map((a) => agents[a].title).join(' · ')}
+            </span>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="home-section">
+    <header class="home-head">
+      <p class="home-eyebrow">How it works</p>
+      <h2>Three steps, no setup</h2>
+    </header>
+    <ol class="steps-grid">
+      {
+        steps.map((s, i) => (
+          <li class="step-card">
+            <span class="step-num">{i + 1}</span>
+            <h3>{s.title}</h3>
+            <p set:html={s.text} />
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <section class="home-section">
+    <div class="tools-grid">
+      <div class="tool-card tool-claude">
+        <h3>Claude Code</h3>
+        <p>Agents in <code>.claude/agents</code>, skills in <code>.claude/skills</code>. Claude delegates automatically, or you call an agent by name.</p>
+        <a href={href('guides/getting-started/#claude-code')}>Install for Claude Code <Icon name="right-arrow" size="1rem" /></a>
+      </div>
+      <div class="tool-card tool-copilot">
+        <h3>GitHub Copilot</h3>
+        <p>Agents in <code>.github/agents</code>, skills in <code>.github/skills</code>. Works in VS Code, Visual Studio, JetBrains, Copilot CLI, and the cloud agent.</p>
+        <a href={href('guides/getting-started/#github-copilot')}>Install for Copilot <Icon name="right-arrow" size="1rem" /></a>
+      </div>
+      <div class="tool-card tool-rules">
+        <h3>Rules you can read</h3>
+        <p>Every rule is tagged <span class="rule-tag rule-mandatory">MANDATORY</span><span class="rule-tag rule-forbidden">FORBIDDEN</span><span class="rule-tag rule-security">SECURITY</span> and more, with side-by-side examples.</p>
+        <a href={href('guides/how-skills-work/')}>How a skill works <Icon name="right-arrow" size="1rem" /></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="home-cta">
+    <h2>Find the right skill in seconds</h2>
+    <p>Search all {counts.skills} skills by name, topic, or technology.</p>
+    <a class="cta-button" href={href('skills/')}>Browse skills <Icon name="magnifier" size="1.1rem" /></a>
+  </section>
+</StarlightPage>

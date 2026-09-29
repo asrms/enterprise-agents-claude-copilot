@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.astro/
+.cache/
+# Generated at build time from ../.github and ../README.md (npm run sync)
+src/content/docs/
+src/generated/

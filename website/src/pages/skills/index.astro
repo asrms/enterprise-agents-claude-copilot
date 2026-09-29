@@ -1,0 +1,66 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { groups, agents, counts, href, skillsInGroup, shortLabel } from '../../lib/catalog';
+import '../../styles/catalog.css';
+
+const sections = groups.map((g) => ({ g, items: skillsInGroup(g.id) })).filter((s) => s.items.length);
+const headings = sections.map(({ g }) => ({ depth: 2, slug: g.id, text: g.label }));
+---
+
+<StarlightPage
+  frontmatter={{
+    title: 'Skills',
+    description: `Search all ${counts.skills} skills: concrete, tagged rules plus side-by-side examples of anti-patterns and fixes.`,
+  }}
+  headings={headings}
+>
+  <p class="lead">
+    {counts.skills} skills with concrete, tagged rules and side-by-side examples. Each skill is listed under the area of the first agent that uses it.
+  </p>
+
+  <div class="catalog-filter" data-filter-root>
+    <label class="filter-search">
+      <span class="sr-only">Filter skills</span>
+      <input type="search" placeholder="Try “kafka”, “security”, “react”, “terraform”…" data-filter-input autocomplete="off" />
+    </label>
+    <div class="filter-pills" role="group" aria-label="Filter by area">
+      <button type="button" class="pill" aria-pressed="true" data-filter-pill="">All</button>
+      {sections.map(({ g }) => (
+        <button type="button" class="pill" aria-pressed="false" data-filter-pill={g.id}>{g.emoji} {shortLabel(g)}</button>
+      ))}
+    </div>
+    <p class="filter-count" data-filter-count aria-live="polite"></p>
+  </div>
+
+  {
+    sections.map(({ g, items }) => (
+      <section class="catalog-group" data-filter-group={g.id}>
+        <h2 id={g.id}>
+          <span aria-hidden="true">{g.emoji}</span> {g.label}
+        </h2>
+        <div class="catalog-grid">
+          {items.map((s) => (
+            <a
+              class="catalog-card"
+              href={href(`skills/${s.name}/`)}
+              data-filter-item
+              data-search={`${s.name} ${s.title} ${s.description} ${s.usedBy.join(' ')}`.toLowerCase()}
+            >
+              <span class="catalog-card-title">{s.title}</span>
+              <span class="catalog-card-desc">{s.description.replace(/\s*Use it when[^.]*\.?$/, '')}</span>
+              <span class="catalog-card-foot">
+                {s.ruleCount} rules · used by {s.usedBy.map((a) => agents[a].title).join(', ')}
+              </span>
+            </a>
+          ))}
+        </div>
+      </section>
+    ))
+  }
+  <p class="filter-empty" data-filter-empty hidden>No skills match your filter.</p>
+</StarlightPage>
+
+<script>
+  import { setupFilter } from '../../scripts/filter';
+  setupFilter('skills');
+</script>
