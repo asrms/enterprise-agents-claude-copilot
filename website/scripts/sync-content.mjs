@@ -1,7 +1,7 @@
 // Generates the site's content from the repository itself, so nothing is duplicated:
 //   ../README.md            -> guides + agent groups
-//   ../.github/agents/*.md  -> one page per agent
-//   ../.github/skills/*/    -> one page per skill (SKILL.md + EXAMPLES.md)
+//   ../src/agents/*.md      -> one page per agent (the sources the playbooks are built from)
+//   ../src/skills/*/        -> one page per skill (SKILL.md + EXAMPLES.md)
 // Output (git-ignored): src/content/docs/** and src/generated/catalog.json
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -12,8 +12,8 @@ import { SITE } from '../site.config.mjs';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const WEB = path.resolve(here, '..');
 const REPO = path.resolve(WEB, '..');
-const AGENTS_DIR = path.join(REPO, '.github', 'agents');
-const SKILLS_DIR = path.join(REPO, '.github', 'skills');
+const AGENTS_DIR = path.join(REPO, 'src', 'agents');
+const SKILLS_DIR = path.join(REPO, 'src', 'skills');
 const DOCS_OUT = path.join(WEB, 'src', 'content', 'docs');
 const GEN_OUT = path.join(WEB, 'src', 'generated');
 
@@ -145,13 +145,14 @@ for (const file of (await readdir(AGENTS_DIR)).filter((f) => f.endsWith('.md')).
   const { data, body } = parseFrontmatter(src);
   const name = data.name ?? file.replace(/(\.agent)?\.md$/, '');
   const role = body.match(/^# Role:\s*(.+)$/m)?.[1].trim() ?? '';
-  const skills = [...body.matchAll(/\(\.\.\/skills\/([\w-]+)\/SKILL\.md\)/g)].map((m) => m[1]);
+  const capabilities = body.match(/^# Capabilities:\s*\r?\n((?:- .+\r?\n?)+)/m)?.[1] ?? '';
+  const skills = [...capabilities.matchAll(/^- ([\w-]+)\s*$/gm)].map((m) => m[1]);
   const objectiveRaw = body.match(/^# Objective:\s*([\s\S]*?)(?:^Acceptance Criteria:|$(?![\s\S]))/m)?.[1].trim() ?? '';
   const criteria = body.match(/^Acceptance Criteria:\s*\n([\s\S]*)$/m)?.[1].trim() ?? '';
   const group = groups.find((g) => g.agents.includes(name));
   agents[name] = {
     name, file, title: humanize(name), description: data.description ?? '', summary: readmeSummary[name] ?? data.description ?? '',
-    tools: Array.isArray(data.tools) ? data.tools : [], role, objective: objectiveRaw, criteria,
+    tools: Array.isArray(data.tools) ? data.tools : String(data.tools ?? '').split(',').map((t) => t.trim()).filter(Boolean), role, objective: objectiveRaw, criteria,
     skills: skills.length ? skills : readmeSkills[name] ?? [], group: group?.id ?? 'other',
   };
 }
@@ -195,30 +196,29 @@ for (const a of Object.values(agents)) {
       return `<a class="mini-card" href="${url(`skills/${s}/`)}"><span class="mini-card-title">${esc(sk?.title ?? humanize(s))}</span><span class="mini-card-desc">${esc(shortDesc(sk?.description ?? ''))}</span></a>`;
     })
     .join('\n');
-  const skillList = a.skills.join(',');
   const md =
-    yaml({ title: a.title, description: a.summary, editUrl: ghBlob(`.github/agents/${a.file}`) }) +
+    yaml({ title: a.title, description: a.summary, editUrl: ghBlob(`src/agents/${a.file}`) }) +
     `<div class="page-meta">${chip(url(`agents/#${g.id}`), `${g.emoji} ${g.label}`, 'chip-group')}<code class="agent-id">${esc(a.name)}</code>${a.tools.map((t) => `<span class="chip chip-tool">${esc(t)}</span>`).join('')}</div>\n\n` +
     `<p class="lead">${esc(a.description)}</p>\n\n` +
     `## Role\n\n${a.role}\n\n` +
-    `## Skills\n\nThis agent applies the rules of these ${a.skills.length} skills as binding.\n\n<div class="mini-grid">\n${skillCards}\n</div>\n\n` +
+    `## Skills\n\nThis agent applies the rules of these ${a.skills.length} skills as binding. They are installed together as one playbook, \`${a.name}-playbook\`.\n\n<div class="mini-grid">\n${skillCards}\n</div>\n\n` +
     (a.objective ? `## Objective\n\n${rewriteLinks(a.objective)}\n\n` : '') +
     (a.criteria ? `## Acceptance criteria\n\n${rewriteLinks(a.criteria)}\n\n` : '') +
     `## Install only this agent\n\n` +
-    `Clone the library once, then copy the agent file and its skills into your project.\n\n` +
+    `Clone the library once, then copy the agent file and its playbook into your project.\n\n` +
     '```bash title="Claude Code"\n' +
     `git clone --depth 1 ${SITE.repoUrl}.git /tmp/enterprise-agents\n` +
     `mkdir -p .claude/agents .claude/skills\n` +
     `cp /tmp/enterprise-agents/.claude/agents/${a.name}.md .claude/agents/\n` +
-    `cp -r /tmp/enterprise-agents/.claude/skills/{${skillList}} .claude/skills/\n` +
+    `cp -r /tmp/enterprise-agents/.claude/skills/${a.name}-playbook .claude/skills/\n` +
     '```\n\n' +
     '```bash title="GitHub Copilot"\n' +
     `git clone --depth 1 ${SITE.repoUrl}.git /tmp/enterprise-agents\n` +
     `mkdir -p .github/agents .github/skills\n` +
     `cp /tmp/enterprise-agents/.github/agents/${a.name}.agent.md .github/agents/\n` +
-    `cp -r /tmp/enterprise-agents/.github/skills/{${skillList}} .github/skills/\n` +
+    `cp -r /tmp/enterprise-agents/.github/skills/${a.name}-playbook .github/skills/\n` +
     '```\n\n' +
-    `Source: [\`.github/agents/${a.file}\`](${ghBlob(`.github/agents/${a.file}`)}) · [\`.claude/agents/${a.name}.md\`](${ghBlob(`.claude/agents/${a.name}.md`)})\n`;
+    `Source: [\`src/agents/${a.file}\`](${ghBlob(`src/agents/${a.file}`)}) · Generated: [\`.claude/agents/${a.name}.md\`](${ghBlob(`.claude/agents/${a.name}.md`)}) · [\`.github/agents/${a.name}.agent.md\`](${ghBlob(`.github/agents/${a.name}.agent.md`)})\n`;
   await writeFile(path.join(DOCS_OUT, 'agents', `${a.name}.md`), md);
 }
 
@@ -233,13 +233,13 @@ for (const s of Object.values(skills)) {
     ? `<div class="page-meta"><span class="meta-label">Used by</span>${s.usedBy.map((a) => chip(url(`agents/${a}/`), agents[a].title)).join('')}</div>\n\n`
     : '';
   const md =
-    yaml({ title: s.title, description: s.description, editUrl: ghBlob(`.github/skills/${s.name}/SKILL.md`) }) +
+    yaml({ title: s.title, description: s.description, editUrl: ghBlob(`src/skills/${s.name}/SKILL.md`) }) +
     usedBy +
     `<p class="lead">${esc(s.description)}</p>\n\n` +
     `${body.trim()}\n\n` +
     (examples.trim() ? `## Examples\n\n${examples.trim()}\n\n` : '') +
-    `---\n\nSource: [\`skills/${s.name}/SKILL.md\`](${ghBlob(`.github/skills/${s.name}/SKILL.md`)})` +
-    (s.examples ? ` · [\`EXAMPLES.md\`](${ghBlob(`.github/skills/${s.name}/EXAMPLES.md`)})` : '') +
+    `---\n\nSource: [\`src/skills/${s.name}/SKILL.md\`](${ghBlob(`src/skills/${s.name}/SKILL.md`)})` +
+    (s.examples ? ` · [\`EXAMPLES.md\`](${ghBlob(`src/skills/${s.name}/EXAMPLES.md`)})` : '') +
     '\n';
   await writeFile(path.join(DOCS_OUT, 'skills', `${s.name}.md`), md);
 }
@@ -256,14 +256,14 @@ const codeTagsToBadges = (md) =>
   mapProse(md, (t) => t.replace(/`\[([A-Z]+)\]`/g, (_, tag) => `<span class="rule-tag rule-${TAG_CLASS[tag] ?? 'guidance'}">${tag}</span>`));
 const prepGuide = (md) => codeTagsToBadges(toAsides(rewriteLinks(guideLinks(md))));
 
-const flowDiagram = `<div class="flow" aria-label="An agent combines seven skills; each skill has a SKILL.md with tagged rules and an EXAMPLES.md with anti-patterns and fixes">
+const flowDiagram = `<div class="flow" aria-label="An agent preloads one playbook that bundles its seven skills; the playbook has a SKILL.md with every tagged rule and a references folder with anti-patterns and fixes">
   <div class="flow-node flow-agent"><strong>🤖 Agent</strong><span>expert role + acceptance criteria</span></div>
   <div class="flow-arrow" aria-hidden="true"></div>
-  <div class="flow-node flow-skills"><strong>📚 7 skills</strong><span>loaded as binding rules</span></div>
+  <div class="flow-node flow-skills"><strong>📘 1 playbook</strong><span>7 skills, loaded as binding rules</span></div>
   <div class="flow-arrow" aria-hidden="true"></div>
   <div class="flow-stack">
     <div class="flow-node"><strong>SKILL.md</strong><span>tagged rules</span></div>
-    <div class="flow-node"><strong>EXAMPLES.md</strong><span>anti-pattern vs fix</span></div>
+    <div class="flow-node"><strong>references/</strong><span>anti-pattern vs fix</span></div>
   </div>
 </div>`;
 
@@ -273,7 +273,7 @@ const guides = [
     body: `${section('quick-start').body}\n\n## Usage\n\n${section('usage').body}`,
   },
   {
-    slug: 'how-skills-work', title: 'How a skill works', description: 'What an agent is made of, the two files in every skill, and what each rule tag means.',
+    slug: 'how-skills-work', title: 'How a skill works', description: 'What an agent is made of, how its skills are bundled into one playbook, and what each rule tag means.',
     body: section('how-a-skill-works').body.replace(/```mermaid[\s\S]*?```/, flowDiagram),
   },
   {
@@ -291,7 +291,7 @@ const catalog = {
   groups,
   agents: Object.fromEntries(Object.values(agents).map(({ objective, criteria, role, ...a }) => [a.name, a])),
   skills: Object.fromEntries(Object.values(skills).map(({ body, examples, ...s }) => [s.name, s])),
-  counts: { agents: Object.keys(agents).length, skills: Object.keys(skills).length },
+  counts: { agents: Object.keys(agents).length, skills: Object.keys(skills).length, playbooks: Object.keys(agents).length },
 };
 await writeFile(path.join(GEN_OUT, 'catalog.json'), JSON.stringify(catalog, null, 2));
 

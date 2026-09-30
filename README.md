@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/banner.svg" alt="Enterprise Claude Agents: 46 specialized AI agents and 304 skills for the whole software development lifecycle" width="100%">
+<img src="assets/banner.svg" alt="Enterprise Claude Agents: 46 specialized AI agents and 304 skills, bundled into 46 playbooks, for the whole software development lifecycle" width="100%">
 
 <br>
 
@@ -8,6 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)](LICENSE)
 [![Agents](https://img.shields.io/badge/agents-46-F0875F?style=flat-square)](#-agents)
 [![Skills](https://img.shields.io/badge/skills-304-C86DD7?style=flat-square)](#-how-a-skill-works)
+[![Playbooks](https://img.shields.io/badge/playbooks-46-8E7CF0?style=flat-square)](#-how-a-skill-works)
 [![Claude Code](https://img.shields.io/badge/Claude_Code-ready-D97757?style=flat-square&logo=anthropic&logoColor=white)](#claude-code)
 [![GitHub Copilot](https://img.shields.io/badge/GitHub_Copilot-ready-6E8BFF?style=flat-square&logo=githubcopilot&logoColor=white)](#github-copilot)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-0ea5e9?style=flat-square)](https://github.com/asrms/enterprise-agents-claude-copilot/pulls)
@@ -28,19 +29,19 @@ Drop one folder into your repo and get senior-level help on every phase of the S
 <td width="33%" valign="top">
 
 ### 🤖 46 agents
-Expert roles (architect, reviewer, SRE, security, and more) with clear acceptance criteria. Each one combines 7 skills.
+Expert roles (architect, reviewer, SRE, security, and more) with clear acceptance criteria. Each one combines 7 skills, shipped as one playbook.
 
 </td>
 <td width="33%" valign="top">
 
-### 📚 304 skills
-Concrete, versioned rules: what is **mandatory**, what is **forbidden**, and **why**, plus side-by-side examples of anti-patterns and fixes.
+### 📚 304 skills in 46 playbooks
+Concrete, versioned rules: what is **mandatory**, what is **forbidden**, and **why**, plus side-by-side examples of anti-patterns and fixes. Bundled into one playbook per agent.
 
 </td>
 <td width="33%" valign="top">
 
 ### 🔌 Two tools, one library
-Same content for **Claude Code** (`.claude/`) and **GitHub Copilot** (`.github/`) in VS Code, Visual Studio, JetBrains, Copilot CLI, and the cloud agent.
+Same content for **Claude Code** (`.claude/`) and **GitHub Copilot** (`.github/`) in VS Code, Visual Studio, JetBrains, Copilot CLI, and the cloud agent. The playbooks also work in **Claude Cowork**.
 
 </td>
 </tr>
@@ -125,9 +126,9 @@ Copy-Item -Recurse -Force $env:TEMP\enterprise-agents\.github\agents, $env:TEMP\
 
 <br>
 
-Copy the agent file plus every skill folder listed for it in the [Agents](#-agents) section. Some skills are shared between agents, so copy each listed folder even if you already have others.
+Copy the agent file and its playbook folder. Every agent has exactly one playbook, named after it, that contains all of its skills.
 
-Example, Spring only: `agents/java-spring-architect` (`.md` for Claude Code, `.agent.md` for Copilot) plus the seven `skills/spring-*` folders.
+Example, Spring only: `agents/java-spring-architect` (`.md` for Claude Code, `.agent.md` for Copilot) plus the `skills/java-spring-architect-playbook` folder.
 
 </details>
 
@@ -139,20 +140,27 @@ Example, Spring only: `agents/java-spring-architect` (`.md` for Claude Code, `.a
 
 - Ask for an agent by name: *"Use the java-spring-architect agent to add a paginated orders endpoint."*
 - Claude also delegates to an agent on its own when the task matches its description.
-- Skills load automatically when relevant. Run `/agents` to list the installed agents.
+- Each agent preloads its playbook, so all of its rules are in context from the start. Ask *"Which agents are available?"* to list the installed ones.
+- You can also use a playbook without its agent: *"Use the java-spring-architect-playbook to review this service."*
 
 **GitHub Copilot**
 
 - **VS Code:** open Copilot Chat and pick the agent from the agents dropdown.
 - **Visual Studio:** open Copilot Chat and pick the agent from the agent picker.
 - **Copilot CLI and cloud agent:** agents in `.github/agents` are available automatically.
-- Skills load automatically when relevant. In VS Code you can also call one directly with `/skill-name` (e.g. `/spring-jpa-performance`).
+- Each agent links to its playbook. Skills load when relevant, and in VS Code you can call a playbook directly with `/skill-name` (e.g. `/java-spring-architect-playbook`).
+
+**Claude Cowork**
+
+- Copy `.claude/skills` into a project folder, or use a project where you already installed the library, and connect that folder to your Cowork task.
+- Cowork doesn't load custom agents, so ask for the playbook instead: *"Use the docker-container-master playbook to review this Dockerfile."* The playbook carries the agent's role, rules, and acceptance criteria.
+- Cowork currently loads at most 100 skills from a connected folder. The 46 playbooks fit, even if you install all of them.
 
 ---
 
 ## 🤖 Agents
 
-Agents are grouped by development phase. Click **Skills** under each group to see what every agent is built from. Some skills are shared (for example `typescript-strict-mode`, `api-design-openapi`, `accessibility-wcag`, `observability-opentelemetry`, `profiling-cpu-memory`, `security-gates-ci`, `llm-client-resilience`).
+Agents are grouped by development phase. Click **Skills** under each group to see what every agent is built from; each agent's skills ship together as one playbook, `<agent>-playbook`. Some skills are shared (for example `typescript-strict-mode`, `api-design-openapi`, `accessibility-wcag`, `observability-opentelemetry`, `profiling-cpu-memory`, `security-gates-ci`, `llm-client-resilience`).
 
 ### 🧭 Plan and design
 
@@ -369,18 +377,30 @@ Agents are grouped by development phase. Click **Skills** under each group to se
 
 ```mermaid
 flowchart LR
-    A["🤖 Agent<br/><i>expert role + acceptance criteria</i>"] --> B["📚 7 skills"]
+    A["🤖 Agent<br/><i>expert role + acceptance criteria</i>"] --> B["📘 Playbook<br/><i>its 7 skills, preloaded</i>"]
     B --> C["SKILL.md<br/><i>tagged rules</i>"]
-    B --> D["EXAMPLES.md<br/><i>anti-pattern vs fix</i>"]
+    B --> D["references/<br/><i>anti-pattern vs fix</i>"]
 ```
 
-Each skill is a folder with two files:
+Each skill is written once, in `src/skills/`, as a folder with two files:
 
 ```
-skills/spring-jpa-performance/
+src/skills/spring-jpa-performance/
 ├── SKILL.md      # rules
 └── EXAMPLES.md   # anti-patterns and best practices, side by side
 ```
+
+A build script bundles each agent's skills into one playbook, which is what you install:
+
+```
+.claude/skills/java-spring-architect-playbook/
+├── SKILL.md                        # role, objective, acceptance criteria, and the rules of all 7 skills
+└── references/
+    ├── spring-jpa-performance.md   # that skill's EXAMPLES.md
+    └── ...
+```
+
+One skill per agent keeps the library within what every tool can load. Cowork, for example, loads at most 100 skills from a folder.
 
 Every rule in `SKILL.md` carries a tag:
 
@@ -400,10 +420,10 @@ Every rule in `SKILL.md` carries a tag:
 
 ## 🛠️ Customizing
 
-The rules reflect common enterprise defaults (for example Java 21, Spring Boot 3.3+, Python 3.12+, Next.js 15+/16, the current Angular, .NET, and Node.js releases, Swift 6, and recent Go, Kubernetes, and Terraform versions). Adapt them freely: edit `SKILL.md` for rules and `EXAMPLES.md` for examples.
+The rules reflect common enterprise defaults (for example Java 21, Spring Boot 3.3+, Python 3.12+, Next.js 15+/16, the current Angular, .NET, and Node.js releases, Swift 6, and recent Go, Kubernetes, and Terraform versions). Adapt them freely:
 
-> [!NOTE]
-> `.claude/` and `.github/` contain the same skills. Agents differ only in the header (tool names and skill references), so when you edit a skill or an agent's instructions, apply the same change in both folders.
+- **In your project:** edit the playbook you copied: `SKILL.md` for rules and `references/` for examples.
+- **In this repository:** edit the sources in `src/` (`src/skills/<skill>/SKILL.md` and `EXAMPLES.md`, `src/agents/<agent>.md`), then run `python3 scripts/build_library.py`. It regenerates `.claude/` and `.github/`, so don't edit those two folders by hand. Before committing, `python3 scripts/build_library.py --check` confirms they are up to date.
 
 ---
 

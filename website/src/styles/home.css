@@ -80,7 +80,7 @@
 /* ---------------------------------------------------------------- stats */
 .home-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 1px;
   border-radius: 1rem;
   overflow: hidden;
@@ -107,6 +107,7 @@
 .home-stats span { font-size: var(--sl-text-sm); color: var(--sl-color-gray-3); }
 @media (max-width: 40rem) {
   .home-stats { grid-template-columns: repeat(2, 1fr); }
+  .home-stats > :last-child:nth-child(odd) { grid-column: span 2; }
 }
 
 /* ---------------------------------------------------------------- sections */

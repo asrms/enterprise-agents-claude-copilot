@@ -7,8 +7,7 @@ on:
     branches: [main]
     paths:
       - 'website/**'
-      - '.github/agents/**'
-      - '.github/skills/**'
+      - 'src/**'
       - 'README.md'
       - '.github/workflows/deploy-site.yml'
   workflow_dispatch:

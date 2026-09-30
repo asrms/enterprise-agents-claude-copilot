@@ -7,8 +7,8 @@ Pages are **generated at build time** from the repository itself, so there is no
 | Source | Becomes |
 |---|---|
 | `../README.md` | Guides (Getting started, How a skill works, Customizing) and the agent groups |
-| `../.github/agents/*.agent.md` | One page per agent under `/agents/` |
-| `../.github/skills/*/SKILL.md` + `EXAMPLES.md` | One page per skill under `/skills/` |
+| `../src/agents/*.md` | One page per agent under `/agents/` |
+| `../src/skills/*/SKILL.md` + `EXAMPLES.md` | One page per skill under `/skills/` |
 
 `scripts/sync-content.mjs` writes them to `src/content/docs/` and `src/generated/` (both git-ignored). Hand-written pages live in `src/pages/` (home, agents index, searchable skills index).
 

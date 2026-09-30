@@ -44,6 +44,7 @@ const steps = [
   <section class="home-stats" aria-label="Library at a glance">
     <div><strong>{counts.agents}</strong><span>expert agents</span></div>
     <div><strong>{counts.skills}</strong><span>skills</span></div>
+    <div><strong>{counts.playbooks}</strong><span>playbooks, one per agent</span></div>
     <div><strong>{ruleTotal.toLocaleString('en-US')}</strong><span>tagged rules</span></div>
     <div><strong>2</strong><span>tools, one library</span></div>
   </section>
@@ -94,12 +95,12 @@ const steps = [
     <div class="tools-grid">
       <div class="tool-card tool-claude">
         <h3>Claude Code</h3>
-        <p>Agents in <code>.claude/agents</code>, skills in <code>.claude/skills</code>. Claude delegates automatically, or you call an agent by name.</p>
+        <p>Agents in <code>.claude/agents</code>, one playbook per agent in <code>.claude/skills</code>. Claude delegates automatically, or you call an agent by name.</p>
         <a href={href('guides/getting-started/#claude-code')}>Install for Claude Code <Icon name="right-arrow" size="1rem" /></a>
       </div>
       <div class="tool-card tool-copilot">
         <h3>GitHub Copilot</h3>
-        <p>Agents in <code>.github/agents</code>, skills in <code>.github/skills</code>. Works in VS Code, Visual Studio, JetBrains, Copilot CLI, and the cloud agent.</p>
+        <p>Agents in <code>.github/agents</code>, one playbook per agent in <code>.github/skills</code>. Works in VS Code, Visual Studio, JetBrains, Copilot CLI, and the cloud agent.</p>
         <a href={href('guides/getting-started/#github-copilot')}>Install for Copilot <Icon name="right-arrow" size="1rem" /></a>
       </div>
       <div class="tool-card tool-rules">

@@ -12,7 +12,7 @@ export type Skill = {
 export const groups = catalog.groups as Group[];
 export const agents = catalog.agents as Record<string, Agent>;
 export const skills = catalog.skills as Record<string, Skill>;
-export const counts = catalog.counts as { agents: number; skills: number };
+export const counts = catalog.counts as { agents: number; skills: number; playbooks: number };
 
 /** Prefixes a site-relative path with the configured base. */
 export const href = (p = '') => `${import.meta.env.BASE_URL.replace(/\/$/, '')}/${p.replace(/^\//, '')}`;
