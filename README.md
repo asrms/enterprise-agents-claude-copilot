@@ -14,7 +14,8 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-0ea5e9?style=flat-square)](https://github.com/asrms/enterprise-agents-claude-copilot/pulls)
 
 **A ready-made team of expert AI agents for Claude Code and GitHub Copilot.**<br>
-Drop one folder into your repo and get senior-level help on every phase of the SDLC, backed by clear, enforceable rules.
+Drop one folder into your repo and get senior-level help on every phase of the SDLC, backed by clear, enforceable rules.<br>
+Free to use, change, and share, commercial use included ([MIT License](#-license)).
 
 **[📖 Browse the website](https://asrms.github.io/enterprise-agents-claude-copilot/)** · [Quick start](#-quick-start) · [Agents](#-agents) · [Usage](#-usage) · [How a skill works](#-how-a-skill-works) · [Customizing](#-customizing)
 
@@ -429,7 +430,18 @@ The rules reflect common enterprise defaults (for example Java 21, Spring Boot 3
 
 ## 📄 License
 
-Released under the [MIT License](LICENSE).
+Released under the [MIT License](LICENSE): free for personal and commercial use, with no sign-up, no fees, and no permission to ask.
+
+In practice, you can:
+
+- ✅ **Use** the agents and playbooks in any project: personal or commercial, open source or closed source.
+- ✅ **Change** them: edit the rules and examples, rename the agents, and keep only the ones you need.
+- ✅ **Share** them with your team, your company, or your customers, as they are or modified.
+- ✅ **Build on them**: include them in your own tools, templates, or products, paid ones too.
+
+The only condition is to keep the copyright and license notice with copies of the library or of substantial parts of it. The simplest way is to copy the [LICENSE](LICENSE) file along with the folders.
+
+The library is provided "as is", without warranty of any kind, so review what the agents produce as you would any other code.
 
 <div align="center">
 <sub>If this library saves you time, consider giving it a ⭐ on GitHub.</sub>
